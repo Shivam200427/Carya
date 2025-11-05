@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Node
+frontend/node_modules/
+video-call-app/node_modules/
+frontend/dist/
+video-call-app/uploads/
+
+# OS/IDE
+.DS_Store
+Thumbs.db
+
+# Reports
+reports/
+
+# Misc
+*.log
+
