@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Video Call App</title>
+    <link rel="stylesheet" href="/static/video-call/style.css" />
+  </head>
+  <body>
+    <div class="container">
+      <h1>Simple Video Call</h1>
+      <section class="upload">
+        <h2>Upload Report (PDF)</h2>
+        <form id="uploadForm">
+          <input type="file" id="reportFile" accept="application/pdf" />
+          <button type="submit">Upload</button>
+          <span id="uploadStatus"></span>
+        </form>
+      </section>
+      <section class="reports">
+        <h2>Shared Reports</h2>
+        <ul id="reportsList"></ul>
+      </section>
+      <div class="controls">
+        <input id="roomId" placeholder="Room ID (e.g., demo)" />
+        <button id="joinBtn">Join</button>
+      </div>
+      <div class="videos">
+        <video id="localVideo" autoplay playsinline muted></video>
+        <video id="remoteVideo" autoplay playsinline></video>
+      </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/static/video-call/script.js"></script>
+  </body>
+</html>
+

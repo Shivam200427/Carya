@@ -1,0 +1,6 @@
+# This file is for Streamlit Cloud deployment
+# If you need system packages, list them here
+# Example:
+# libgomp1
+# libgl1-mesa-glx
+
