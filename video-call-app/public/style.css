@@ -1,0 +1,107 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  background: #0f172a;
+  color: #e2e8f0;
+}
+
+.container {
+  max-width: 960px;
+  margin: 32px auto;
+  padding: 0 16px;
+}
+
+h1 {
+  margin: 0 0 16px;
+  font-size: 24px;
+}
+
+.upload {
+  margin-bottom: 16px;
+  padding: 12px;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  background: #0b1220;
+}
+
+.upload h2 {
+  margin: 0 0 8px;
+  font-size: 16px;
+}
+
+.upload form {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.upload #uploadStatus {
+  font-size: 12px;
+  opacity: 0.9;
+}
+
+.reports {
+  margin-bottom: 16px;
+  padding: 12px;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  background: #0b1220;
+}
+
+.reports h2 {
+  margin: 0 0 8px;
+  font-size: 16px;
+}
+
+.reports ul {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.reports a {
+  color: #93c5fd;
+}
+
+.controls {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+input {
+  flex: 1;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #334155;
+  background: #0b1220;
+  color: #e2e8f0;
+}
+
+button {
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid #475569;
+  background: #1e293b;
+  color: #e2e8f0;
+  cursor: pointer;
+}
+
+.videos {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+video {
+  width: 100%;
+  background: #0b1220;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  aspect-ratio: 16 / 9;
+}
+
+
