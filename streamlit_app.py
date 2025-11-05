@@ -356,8 +356,7 @@ if page == "🏠 Analyze X-ray":
                 analyze_clicked = st.button(
                     "🔍 Analyze with AI",
                     type="primary",
-                    use_container_width=True,
-                    use_container_height=True
+                    use_container_width=True
                 )
             
             if analyze_clicked:
