@@ -1,7 +1,18 @@
 import cv2
 import numpy as np
-from tkinter import Tk, filedialog
-import matplotlib.pyplot as plt
+
+# Optional imports for GUI functionality (not needed in Streamlit)
+try:
+    from tkinter import Tk, filedialog
+    HAS_TKINTER = True
+except ImportError:
+    HAS_TKINTER = False
+
+try:
+    import matplotlib.pyplot as plt
+    HAS_MATPLOTLIB = True
+except ImportError:
+    HAS_MATPLOTLIB = False
 
 
 def pick_image():
@@ -9,6 +20,9 @@ def pick_image():
     Opens a file dialog to pick an image from the local device.
     Returns the selected image file path.
     """
+    if not HAS_TKINTER:
+        raise ImportError("tkinter is not available. This function requires GUI support.")
+    
     Tk().withdraw()  # Hide main Tkinter window
     file_path = filedialog.askopenfilename(
         title="Select Chest X-ray Image",
@@ -64,6 +78,11 @@ def enhance_xray(img_path, target_size=(512, 512)):
 
 
 if __name__ == "__main__":
+    if not HAS_TKINTER:
+        print("Error: tkinter is not available. Cannot open file dialog.")
+        print("Please provide image path as command line argument or use Streamlit app.")
+        exit(1)
+    
     # Step 1: Pick image
     path = pick_image()
     print("Selected image:", path)
@@ -72,14 +91,18 @@ if __name__ == "__main__":
     enhanced = enhance_xray(path, target_size=(512, 512))
 
     # Step 3: Display before and after
-    original = cv2.imread(path, cv2.IMREAD_GRAYSCALE)
-    plt.figure(figsize=(10, 4))
-    plt.subplot(1, 2, 1)
-    plt.imshow(original, cmap='gray')
-    plt.title("Original X-ray")
+    if HAS_MATPLOTLIB:
+        original = cv2.imread(path, cv2.IMREAD_GRAYSCALE)
+        plt.figure(figsize=(10, 4))
+        plt.subplot(1, 2, 1)
+        plt.imshow(original, cmap='gray')
+        plt.title("Original X-ray")
 
-    plt.subplot(1, 2, 2)
-    plt.imshow(enhanced, cmap='gray')
-    plt.title("Gamma Corrected X-ray")
+        plt.subplot(1, 2, 2)
+        plt.imshow(enhanced, cmap='gray')
+        plt.title("Gamma Corrected X-ray")
 
-    plt.show()
+        plt.show()
+    else:
+        print("matplotlib not available. Skipping visualization.")
+        print(f"Enhanced image shape: {enhanced.shape}")
