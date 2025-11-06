@@ -718,7 +718,7 @@ elif page == "📋 My Reports":
                         max_prob = max(probs.values()) if probs else 0
                         st.metric("Highest Probability", f"{max_prob:.1%}")
     else:
-        st.info("""
+        st.markdown("""
         <div style='text-align: center; padding: 3rem;'>
             <h3 style='color: #667eea;'>📋 No Reports Yet</h3>
             <p style='color: #666;'>Analyze your first X-ray to generate a report!</p>
