@@ -228,53 +228,71 @@ def embed_vapi_widget(public_api_key: str, assistant_id: str = None):
     """Embed Vapi Web Widget for voice interactions"""
     assistant_config = f'assistantId: "{assistant_id}",' if assistant_id else ''
     
-    widget_html = f"""
+    # First, ensure the script is loaded
+    script_tag = """
     <script src="https://cdn.vapi.ai/widget.js"></script>
+    """
+    
+    # Then initialize the widget
+    init_script = f"""
     <script>
-        // Initialize widget after script loads
-        function initVapiWidget() {{
-            if (typeof VapiWidget === 'undefined') {{
-                console.error('VapiWidget not loaded yet');
-                setTimeout(initVapiWidget, 100);
+        (function() {{
+            // Prevent multiple initializations
+            if (window.vapiWidgetInitialized) {{
+                console.log('Vapi widget already initialized');
                 return;
             }}
             
-            // Destroy existing widget if it exists
-            if (window.vapiWidgetInstance) {{
+            function initializeWidget() {{
+                if (typeof VapiWidget === 'undefined') {{
+                    console.log('Waiting for VapiWidget...');
+                    setTimeout(initializeWidget, 200);
+                    return;
+                }}
+                
+                // Destroy existing widget if it exists
+                if (window.vapiWidgetInstance) {{
+                    try {{
+                        window.vapiWidgetInstance.destroy();
+                    }} catch(e) {{
+                        console.log('Cleaning up existing widget');
+                    }}
+                }}
+                
+                // Create new widget
                 try {{
-                    window.vapiWidgetInstance.destroy();
-                }} catch(e) {{
-                    console.log('Cleaning up existing widget');
+                    window.vapiWidgetInstance = new VapiWidget({{
+                        publicKey: "{public_api_key}",
+                        {assistant_config}
+                        position: "bottom-right",
+                        theme: {{
+                            primaryColor: "#667eea",
+                            backgroundColor: "#ffffff",
+                            textColor: "#333333"
+                        }}
+                    }});
+                    window.vapiWidgetInitialized = true;
+                    console.log('✅ Vapi widget initialized successfully');
+                }} catch(error) {{
+                    console.error('❌ Error initializing Vapi widget:', error);
+                    console.error('Error details:', error.message, error.stack);
                 }}
             }}
             
-            // Create new widget
-            try {{
-                window.vapiWidgetInstance = new VapiWidget({{
-                    publicKey: "{public_api_key}",
-                    {assistant_config}
-                    position: "bottom-right",
-                    theme: {{
-                        primaryColor: "#667eea",
-                        backgroundColor: "#ffffff",
-                        textColor: "#333333"
-                    }}
+            // Start initialization after a short delay to ensure script is loaded
+            if (document.readyState === 'loading') {{
+                document.addEventListener('DOMContentLoaded', function() {{
+                    setTimeout(initializeWidget, 500);
                 }});
-                console.log('✅ Vapi widget initialized successfully');
-            }} catch(error) {{
-                console.error('❌ Error initializing Vapi widget:', error);
+            }} else {{
+                setTimeout(initializeWidget, 500);
             }}
-        }}
-        
-        // Start initialization
-        if (document.readyState === 'loading') {{
-            document.addEventListener('DOMContentLoaded', initVapiWidget);
-        }} else {{
-            // DOM already loaded
-            setTimeout(initVapiWidget, 200);
-        }}
+        }})();
     </script>
     """
+    
+    # Combine both scripts
+    widget_html = script_tag + init_script
     components.html(widget_html, height=0)
 
 def save_preprocessed_image(preprocessed_array, output_path):
@@ -832,10 +850,49 @@ elif page == "📋 My Reports":
 # Embed Vapi widget - always visible on all pages when enabled
 # This runs at the end of the script so it appears on every page
 if st.session_state.get('vapi_enabled', True) and st.session_state.get('vapi_public_key'):
+    # Use both methods to ensure widget loads
     embed_vapi_widget(
         st.session_state.vapi_public_key,
         st.session_state.vapi_assistant_id if st.session_state.get('vapi_assistant_id') else None
     )
+    
+    # Also inject via markdown as backup (runs in page context)
+    assistant_id = st.session_state.vapi_assistant_id if st.session_state.get('vapi_assistant_id') else ''
+    assistant_config = f'assistantId: "{assistant_id}",' if assistant_id else ''
+    
+    backup_script = f"""
+    <script>
+        if (!window.vapiWidgetBackupLoaded) {{
+            window.vapiWidgetBackupLoaded = true;
+            var checkVapi = setInterval(function() {{
+                if (typeof VapiWidget !== 'undefined' && !window.vapiWidgetInstance) {{
+                    clearInterval(checkVapi);
+                    try {{
+                        window.vapiWidgetInstance = new VapiWidget({{
+                            publicKey: "{st.session_state.vapi_public_key}",
+                            {assistant_config}
+                            position: "bottom-right",
+                            theme: {{
+                                primaryColor: "#667eea",
+                                backgroundColor: "#ffffff",
+                                textColor: "#333333"
+                            }}
+                        }});
+                        console.log('✅ Vapi widget loaded via backup method');
+                    }} catch(e) {{
+                        console.error('Backup widget init error:', e);
+                    }}
+                }}
+            }}, 200);
+            
+            // Stop checking after 10 seconds
+            setTimeout(function() {{
+                clearInterval(checkVapi);
+            }}, 10000);
+        }}
+    </script>
+    """
+    st.markdown(backup_script, unsafe_allow_html=True)
 
 # ============================================================================
 # FOOTER
