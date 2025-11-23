@@ -661,7 +661,8 @@ def predict_and_generate_report(model_path, image_path, output_pdf="Chest_Report
     
     try:
         # First try: Load as full model (your model was saved with torch.save(model, ...))
-        checkpoint = torch.load(model_path, map_location=device)
+        # weights_only=False is needed for PyTorch 2.6+ to load custom classes
+        checkpoint = torch.load(model_path, map_location=device, weights_only=False)
         
         if isinstance(checkpoint, nn.Module):
             # Full model object saved - use it directly
@@ -700,7 +701,8 @@ def predict_and_generate_report(model_path, image_path, output_pdf="Chest_Report
         print("Attempting direct model loading as fallback...")
         try:
             # Last resort: try loading directly
-            model = torch.load(model_path, map_location=device)
+            # weights_only=False is needed for PyTorch 2.6+ to load custom classes
+            model = torch.load(model_path, map_location=device, weights_only=False)
             if not isinstance(model, nn.Module):
                 raise ValueError(f"Loaded object is not a model (type: {type(model)})")
             print("✓ Loaded model directly")
