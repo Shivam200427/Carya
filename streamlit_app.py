@@ -562,18 +562,28 @@ if page == "🏠 Analyze X-ray":
                 # Download Section
                 st.markdown("#### 📥 Download Report")
                 
-                if os.path.exists(output_pdf_path):
-                    col_dl1, col_dl2, col_dl3 = st.columns([1, 2, 1])
-                    with col_dl2:
-                        with open(output_pdf_path, 'rb') as pdf_file:
-                            st.download_button(
-                                label="📄 Download PDF Report",
-                                data=pdf_file,
-                                file_name=report_filename,
-                                mime="application/pdf",
-                                use_container_width=True,
-                                type="primary"
-                            )
+                # Get the most recent report path from session state
+                if st.session_state.reports:
+                    latest_report = st.session_state.reports[-1]
+                    output_pdf_path = latest_report['path']
+                    report_filename = latest_report['filename']
+                    
+                    if os.path.exists(output_pdf_path):
+                        col_dl1, col_dl2, col_dl3 = st.columns([1, 2, 1])
+                        with col_dl2:
+                            with open(output_pdf_path, 'rb') as pdf_file:
+                                st.download_button(
+                                    label="📄 Download PDF Report",
+                                    data=pdf_file,
+                                    file_name=report_filename,
+                                    mime="application/pdf",
+                                    use_container_width=True,
+                                    type="primary"
+                                )
+                    else:
+                        st.warning("⚠️ Report file not found. Please run the analysis again.")
+                else:
+                    st.info("📋 No reports available for download.")
         
         else:
             # Empty State
