@@ -226,19 +226,53 @@ st.markdown("""
 
 def embed_vapi_widget(public_api_key: str, assistant_id: str = None):
     """Embed Vapi Web Widget for voice interactions"""
+    assistant_config = f'assistantId: "{assistant_id}",' if assistant_id else ''
+    
     widget_html = f"""
     <script src="https://cdn.vapi.ai/widget.js"></script>
     <script>
-        window.vapiWidget = new VapiWidget({{
-            publicKey: "{public_api_key}",
-            {f'assistantId: "{assistant_id}",' if assistant_id else ''}
-            position: "bottom-right",
-            theme: {{
-                primaryColor: "#667eea",
-                backgroundColor: "#ffffff",
-                textColor: "#333333"
+        // Initialize widget after script loads
+        function initVapiWidget() {{
+            if (typeof VapiWidget === 'undefined') {{
+                console.error('VapiWidget not loaded yet');
+                setTimeout(initVapiWidget, 100);
+                return;
             }}
-        }});
+            
+            // Destroy existing widget if it exists
+            if (window.vapiWidgetInstance) {{
+                try {{
+                    window.vapiWidgetInstance.destroy();
+                }} catch(e) {{
+                    console.log('Cleaning up existing widget');
+                }}
+            }}
+            
+            // Create new widget
+            try {{
+                window.vapiWidgetInstance = new VapiWidget({{
+                    publicKey: "{public_api_key}",
+                    {assistant_config}
+                    position: "bottom-right",
+                    theme: {{
+                        primaryColor: "#667eea",
+                        backgroundColor: "#ffffff",
+                        textColor: "#333333"
+                    }}
+                }});
+                console.log('✅ Vapi widget initialized successfully');
+            }} catch(error) {{
+                console.error('❌ Error initializing Vapi widget:', error);
+            }}
+        }}
+        
+        // Start initialization
+        if (document.readyState === 'loading') {{
+            document.addEventListener('DOMContentLoaded', initVapiWidget);
+        }} else {{
+            // DOM already loaded
+            setTimeout(initVapiWidget, 200);
+        }}
     </script>
     """
     components.html(widget_html, height=0)
@@ -324,6 +358,12 @@ with st.sidebar:
         if st.button("🔇 Hide Voice Assistant", use_container_width=True):
             st.session_state.vapi_enabled = False
             st.rerun()
+        
+        # Debug info (collapsible)
+        with st.expander("🔧 Debug Info", expanded=False):
+            st.code(f"API Key: {st.session_state.vapi_public_key[:20]}...")
+            st.code(f"Assistant ID: {st.session_state.vapi_assistant_id}")
+            st.caption("💡 Check browser console (F12) for widget initialization messages")
     else:
         st.warning("🔇 Voice assistant is hidden")
         if st.button("🎤 Show Voice Assistant", use_container_width=True, type="primary"):
