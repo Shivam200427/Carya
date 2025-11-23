@@ -307,7 +307,7 @@ with st.sidebar:
     # Vapi Voice Assistant Configuration
     st.markdown("### 🎤 Voice Assistant")
     
-    # Initialize Vapi config in session state
+    # Initialize Vapi config in session state (always enabled by default)
     if 'vapi_public_key' not in st.session_state:
         st.session_state.vapi_public_key = "53b6f2fa-8284-4329-a47d-4094deb68423"
     
@@ -315,17 +315,18 @@ with st.sidebar:
         st.session_state.vapi_assistant_id = "559846aa-b7be-48fa-8dd9-d27a13dd4844"
     
     if 'vapi_enabled' not in st.session_state:
-        st.session_state.vapi_enabled = False
+        st.session_state.vapi_enabled = True  # Always enabled by default
     
     # Display current status
     if st.session_state.vapi_enabled:
         st.success("✅ Voice assistant is active!")
-        st.info("💡 Look for the Carya voice widget in the bottom-right corner. Click it to start talking!")
-        if st.button("🔇 Disable Voice Assistant", use_container_width=True):
+        st.info("💡 Look for the Carya voice widget in the bottom-right corner on any page. Click it to start talking!")
+        if st.button("🔇 Hide Voice Assistant", use_container_width=True):
             st.session_state.vapi_enabled = False
             st.rerun()
     else:
-        if st.button("🎤 Enable Voice Assistant", use_container_width=True, type="primary"):
+        st.warning("🔇 Voice assistant is hidden")
+        if st.button("🎤 Show Voice Assistant", use_container_width=True, type="primary"):
             st.session_state.vapi_enabled = True
             st.rerun()
     
@@ -785,11 +786,12 @@ elif page == "📋 My Reports":
         """, unsafe_allow_html=True)
 
 # ============================================================================
-# VAPI VOICE WIDGET EMBED
+# VAPI VOICE WIDGET EMBED (Always visible on all pages)
 # ============================================================================
 
-# Embed Vapi widget if enabled
-if st.session_state.get('vapi_enabled') and st.session_state.get('vapi_public_key'):
+# Embed Vapi widget - always visible on all pages when enabled
+# This runs at the end of the script so it appears on every page
+if st.session_state.get('vapi_enabled', True) and st.session_state.get('vapi_public_key'):
     embed_vapi_widget(
         st.session_state.vapi_public_key,
         st.session_state.vapi_assistant_id if st.session_state.get('vapi_assistant_id') else None
