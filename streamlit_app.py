@@ -4,7 +4,6 @@ Modern, polished UI/UX for a professional user experience
 """
 
 import streamlit as st
-import streamlit.components.v1 as components
 import os
 import tempfile
 import uuid
@@ -224,77 +223,6 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-def embed_vapi_widget(public_api_key: str, assistant_id: str = None):
-    """Embed Vapi Web Widget for voice interactions"""
-    assistant_config = f'assistantId: "{assistant_id}",' if assistant_id else ''
-    
-    # First, ensure the script is loaded
-    script_tag = """
-    <script src="https://cdn.vapi.ai/widget.js"></script>
-    """
-    
-    # Then initialize the widget
-    init_script = f"""
-    <script>
-        (function() {{
-            // Prevent multiple initializations
-            if (window.vapiWidgetInitialized) {{
-                console.log('Vapi widget already initialized');
-                return;
-            }}
-            
-            function initializeWidget() {{
-                if (typeof VapiWidget === 'undefined') {{
-                    console.log('Waiting for VapiWidget...');
-                    setTimeout(initializeWidget, 200);
-                    return;
-                }}
-                
-                // Destroy existing widget if it exists
-                if (window.vapiWidgetInstance) {{
-                    try {{
-                        window.vapiWidgetInstance.destroy();
-                    }} catch(e) {{
-                        console.log('Cleaning up existing widget');
-                    }}
-                }}
-                
-                // Create new widget
-                try {{
-                    window.vapiWidgetInstance = new VapiWidget({{
-                        publicKey: "{public_api_key}",
-                        {assistant_config}
-                        position: "bottom-right",
-                        theme: {{
-                            primaryColor: "#667eea",
-                            backgroundColor: "#ffffff",
-                            textColor: "#333333"
-                        }}
-                    }});
-                    window.vapiWidgetInitialized = true;
-                    console.log('✅ Vapi widget initialized successfully');
-                }} catch(error) {{
-                    console.error('❌ Error initializing Vapi widget:', error);
-                    console.error('Error details:', error.message, error.stack);
-                }}
-            }}
-            
-            // Start initialization after a short delay to ensure script is loaded
-            if (document.readyState === 'loading') {{
-                document.addEventListener('DOMContentLoaded', function() {{
-                    setTimeout(initializeWidget, 500);
-                }});
-            }} else {{
-                setTimeout(initializeWidget, 500);
-            }}
-        }})();
-    </script>
-    """
-    
-    # Combine both scripts
-    widget_html = script_tag + init_script
-    components.html(widget_html, height=0)
-
 def save_preprocessed_image(preprocessed_array, output_path):
     """Save preprocessed numpy array to image file."""
     img_uint8 = (preprocessed_array * 255).astype(np.uint8)
@@ -353,42 +281,6 @@ with st.sidebar:
                            if r['results'].get('detected_diseases') and 
                            r['results']['detected_diseases'] != "NA")
         st.metric("Analyses with Findings", total_detected)
-    
-    st.markdown("---")
-    
-    # Vapi Voice Assistant Configuration
-    st.markdown("### 🎤 Voice Assistant")
-    
-    # Initialize Vapi config in session state (always enabled by default)
-    if 'vapi_public_key' not in st.session_state:
-        st.session_state.vapi_public_key = "53b6f2fa-8284-4329-a47d-4094deb68423"
-    
-    if 'vapi_assistant_id' not in st.session_state:
-        st.session_state.vapi_assistant_id = "559846aa-b7be-48fa-8dd9-d27a13dd4844"
-    
-    if 'vapi_enabled' not in st.session_state:
-        st.session_state.vapi_enabled = True  # Always enabled by default
-    
-    # Display current status
-    if st.session_state.vapi_enabled:
-        st.success("✅ Voice assistant is active!")
-        st.info("💡 Look for the Carya voice widget in the bottom-right corner on any page. Click it to start talking!")
-        if st.button("🔇 Hide Voice Assistant", use_container_width=True):
-            st.session_state.vapi_enabled = False
-            st.rerun()
-        
-        # Debug info (collapsible)
-        with st.expander("🔧 Debug Info", expanded=False):
-            st.code(f"API Key: {st.session_state.vapi_public_key[:20]}...")
-            st.code(f"Assistant ID: {st.session_state.vapi_assistant_id}")
-            st.caption("💡 Check browser console (F12) for widget initialization messages")
-    else:
-        st.warning("🔇 Voice assistant is hidden")
-        if st.button("🎤 Show Voice Assistant", use_container_width=True, type="primary"):
-            st.session_state.vapi_enabled = True
-            st.rerun()
-    
-    st.caption("💬 Talk to Carya about your X-ray results, symptoms, or health questions")
     
     st.markdown("---")
     st.markdown("""
@@ -842,57 +734,6 @@ elif page == "📋 My Reports":
             <p style='color: #666;'>Analyze your first X-ray to generate a report!</p>
         </div>
         """, unsafe_allow_html=True)
-
-# ============================================================================
-# VAPI VOICE WIDGET EMBED (Always visible on all pages)
-# ============================================================================
-
-# Embed Vapi widget - always visible on all pages when enabled
-# This runs at the end of the script so it appears on every page
-if st.session_state.get('vapi_enabled', True) and st.session_state.get('vapi_public_key'):
-    # Use both methods to ensure widget loads
-    embed_vapi_widget(
-        st.session_state.vapi_public_key,
-        st.session_state.vapi_assistant_id if st.session_state.get('vapi_assistant_id') else None
-    )
-    
-    # Also inject via markdown as backup (runs in page context)
-    assistant_id = st.session_state.vapi_assistant_id if st.session_state.get('vapi_assistant_id') else ''
-    assistant_config = f'assistantId: "{assistant_id}",' if assistant_id else ''
-    
-    backup_script = f"""
-    <script>
-        if (!window.vapiWidgetBackupLoaded) {{
-            window.vapiWidgetBackupLoaded = true;
-            var checkVapi = setInterval(function() {{
-                if (typeof VapiWidget !== 'undefined' && !window.vapiWidgetInstance) {{
-                    clearInterval(checkVapi);
-                    try {{
-                        window.vapiWidgetInstance = new VapiWidget({{
-                            publicKey: "{st.session_state.vapi_public_key}",
-                            {assistant_config}
-                            position: "bottom-right",
-                            theme: {{
-                                primaryColor: "#667eea",
-                                backgroundColor: "#ffffff",
-                                textColor: "#333333"
-                            }}
-                        }});
-                        console.log('✅ Vapi widget loaded via backup method');
-                    }} catch(e) {{
-                        console.error('Backup widget init error:', e);
-                    }}
-                }}
-            }}, 200);
-            
-            // Stop checking after 10 seconds
-            setTimeout(function() {{
-                clearInterval(checkVapi);
-            }}, 10000);
-        }}
-    </script>
-    """
-    st.markdown(backup_script, unsafe_allow_html=True)
 
 # ============================================================================
 # FOOTER
