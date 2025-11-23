@@ -42,9 +42,9 @@ sys.modules['__main__'].PartitionReconstructionAttentionBlock_LMSA = PartitionRe
 sys.modules['__main__'].ConvSEBlock = ConvSEBlock
 sys.modules['__main__'].SemaCheXFormer = SemaCheXFormer
 
-# Import functions from your existing scripts
-from preprocess_xray_gui import enhance_xray
+# Import inference function from your existing script
 from chest_xray_inference import predict_and_generate_report
+# Note: Preprocessing step removed - inference will handle its own preprocessing
 
 app = Flask(__name__, template_folder='templates')
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
@@ -68,32 +68,10 @@ def allowed_file(filename):
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
-def save_preprocessed_image(preprocessed_array, output_path):
-    """
-    Save preprocessed numpy array (0-1 normalized) to image file.
-    
-    Args:
-        preprocessed_array: numpy array in range [0, 1], shape (512, 512)
-        output_path: path to save the image
-    """
-    # Convert from [0,1] to [0,255] and change to uint8
-    img_uint8 = (preprocessed_array * 255).astype(np.uint8)
-    
-    # Save using OpenCV
-    cv2.imwrite(output_path, img_uint8)
-    return output_path
-
-
 @app.route('/')
 def index():
     """Serve the main web interface."""
     return render_template('index.html')
-
-
-@app.route('/doctor')
-def doctor():
-    """Serve the Doctor Connect (video call) page."""
-    return render_template('doctor.html')
 
 
 @app.route('/health', methods=['GET'])
@@ -166,29 +144,17 @@ def predict():
         report_filename = f'Chest_Report_{timestamp}_{report_id[:8]}.pdf'
         output_pdf_path = os.path.join(app.config['REPORTS_FOLDER'], report_filename)
         
-        # Create temporary files for input and preprocessed image
+        # Create temporary file for input image (skip preprocessing)
         with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as input_tmp:
             input_path = input_tmp.name
             file.save(input_path)
         
-        with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as preprocessed_tmp:
-            preprocessed_path = preprocessed_tmp.name
-        
         try:
-            # Step 1: Preprocess the image using enhance_xray()
-            print("Step 1: Preprocessing image...")
-            preprocessed_array = enhance_xray(input_path, target_size=(512, 512))
-            print("✓ Image preprocessed")
-            
-            # Step 2: Save preprocessed image to temporary file
-            save_preprocessed_image(preprocessed_array, preprocessed_path)
-            print("✓ Preprocessed image saved")
-            
-            # Step 3: Run inference using the preprocessed image
-            print("Step 2: Running inference and generating PDF report...")
+            # Run inference directly using the original uploaded image (NO PREPROCESSING)
+            print("Running inference directly on uploaded image (preprocessing skipped)...")
             results = predict_and_generate_report(
                 model_path=model_path,
-                image_path=preprocessed_path,  # Use preprocessed image
+                image_path=input_path,  # Use original image directly
                 output_pdf=output_pdf_path,
                 threshold=threshold,
                 device=None  # Auto-detect device
@@ -208,8 +174,6 @@ def predict():
             try:
                 if os.path.exists(input_path):
                     os.unlink(input_path)
-                if os.path.exists(preprocessed_path):
-                    os.unlink(preprocessed_path)
             except Exception as e:
                 print(f"Warning: Could not delete temporary files: {e}")
     
@@ -270,18 +234,11 @@ def predict_json():
             input_path = input_tmp.name
             file.save(input_path)
         
-        with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as preprocessed_tmp:
-            preprocessed_path = preprocessed_tmp.name
-        
         try:
-            # Preprocess
-            preprocessed_array = enhance_xray(input_path, target_size=(512, 512))
-            save_preprocessed_image(preprocessed_array, preprocessed_path)
-            
-            # Run inference
+            # Run inference directly (NO PREPROCESSING)
             results = predict_and_generate_report(
                 model_path=model_path,
-                image_path=preprocessed_path,
+                image_path=input_path,  # Use original image directly
                 output_pdf=output_pdf_path,
                 threshold=threshold,
                 device=None
@@ -304,8 +261,6 @@ def predict_json():
             try:
                 if os.path.exists(input_path):
                     os.unlink(input_path)
-                if os.path.exists(preprocessed_path):
-                    os.unlink(preprocessed_path)
             except Exception:
                 pass
     

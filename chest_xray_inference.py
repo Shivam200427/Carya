@@ -123,19 +123,6 @@ class SemaCheXFormer(nn.Module):
         cnn_out = self.cnn_se_stage(attention_out)
         return self.classification_head(cnn_out)
 
-# Make the model class discoverable under __main__ for loading pickled full-model checkpoints
-# Some training scripts save with torch.save(model, ...) while the class lives in __main__ at save time.
-# When loading from another module (e.g., Flask app), pickle looks for __main__.SemaCheXFormer.
-# We register the class on the current __main__ module so torch.load can resolve it.
-try:
-    import sys as _sys
-    _main_mod = _sys.modules.get('__main__')
-    if _main_mod is not None and not hasattr(_main_mod, 'SemaCheXFormer'):
-        setattr(_main_mod, 'SemaCheXFormer', SemaCheXFormer)
-except Exception:
-    # Non-fatal; we still support state_dict loading paths below
-    pass
-
 # ==============================================================================
 # GRAD-CAM IMPLEMENTATION
 # ==============================================================================
@@ -674,7 +661,7 @@ def predict_and_generate_report(model_path, image_path, output_pdf="Chest_Report
     
     try:
         # First try: Load as full model (your model was saved with torch.save(model, ...))
-        checkpoint = torch.load(model_path, map_location=device, weights_only=False)
+        checkpoint = torch.load(model_path, map_location=device)
         
         if isinstance(checkpoint, nn.Module):
             # Full model object saved - use it directly
@@ -713,7 +700,7 @@ def predict_and_generate_report(model_path, image_path, output_pdf="Chest_Report
         print("Attempting direct model loading as fallback...")
         try:
             # Last resort: try loading directly
-            model = torch.load(model_path, map_location=device, weights_only=False)
+            model = torch.load(model_path, map_location=device)
             if not isinstance(model, nn.Module):
                 raise ValueError(f"Loaded object is not a model (type: {type(model)})")
             print("✓ Loaded model directly")

@@ -4,6 +4,7 @@ Modern, polished UI/UX for a professional user experience
 """
 
 import streamlit as st
+import streamlit.components.v1 as components
 import os
 import tempfile
 import uuid
@@ -223,6 +224,25 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
+def embed_vapi_widget(public_api_key: str, assistant_id: str = None):
+    """Embed Vapi Web Widget for voice interactions"""
+    widget_html = f"""
+    <script src="https://cdn.vapi.ai/widget.js"></script>
+    <script>
+        window.vapiWidget = new VapiWidget({{
+            publicKey: "{public_api_key}",
+            {f'assistantId: "{assistant_id}",' if assistant_id else ''}
+            position: "bottom-right",
+            theme: {{
+                primaryColor: "#667eea",
+                backgroundColor: "#ffffff",
+                textColor: "#333333"
+            }}
+        }});
+    </script>
+    """
+    components.html(widget_html, height=0)
+
 def save_preprocessed_image(preprocessed_array, output_path):
     """Save preprocessed numpy array to image file."""
     img_uint8 = (preprocessed_array * 255).astype(np.uint8)
@@ -281,6 +301,35 @@ with st.sidebar:
                            if r['results'].get('detected_diseases') and 
                            r['results']['detected_diseases'] != "NA")
         st.metric("Analyses with Findings", total_detected)
+    
+    st.markdown("---")
+    
+    # Vapi Voice Assistant Configuration
+    st.markdown("### 🎤 Voice Assistant")
+    
+    # Initialize Vapi config in session state
+    if 'vapi_public_key' not in st.session_state:
+        st.session_state.vapi_public_key = "53b6f2fa-8284-4329-a47d-4094deb68423"
+    
+    if 'vapi_assistant_id' not in st.session_state:
+        st.session_state.vapi_assistant_id = "559846aa-b7be-48fa-8dd9-d27a13dd4844"
+    
+    if 'vapi_enabled' not in st.session_state:
+        st.session_state.vapi_enabled = False
+    
+    # Display current status
+    if st.session_state.vapi_enabled:
+        st.success("✅ Voice assistant is active!")
+        st.info("💡 Look for the Carya voice widget in the bottom-right corner. Click it to start talking!")
+        if st.button("🔇 Disable Voice Assistant", use_container_width=True):
+            st.session_state.vapi_enabled = False
+            st.rerun()
+    else:
+        if st.button("🎤 Enable Voice Assistant", use_container_width=True, type="primary"):
+            st.session_state.vapi_enabled = True
+            st.rerun()
+    
+    st.caption("💬 Talk to Carya about your X-ray results, symptoms, or health questions")
     
     st.markdown("---")
     st.markdown("""
@@ -724,6 +773,17 @@ elif page == "📋 My Reports":
             <p style='color: #666;'>Analyze your first X-ray to generate a report!</p>
         </div>
         """, unsafe_allow_html=True)
+
+# ============================================================================
+# VAPI VOICE WIDGET EMBED
+# ============================================================================
+
+# Embed Vapi widget if enabled
+if st.session_state.get('vapi_enabled') and st.session_state.get('vapi_public_key'):
+    embed_vapi_widget(
+        st.session_state.vapi_public_key,
+        st.session_state.vapi_assistant_id if st.session_state.get('vapi_assistant_id') else None
+    )
 
 # ============================================================================
 # FOOTER

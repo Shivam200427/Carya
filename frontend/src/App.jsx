@@ -75,7 +75,7 @@ export default function App() {
         <div className="header-cta">
           <a href="/" onClick={(e) => e.preventDefault()}>Docs</a>
           <a
-            href="/doctor"
+            href="http://localhost:5000/doctor"
             target="_blank"
             rel="noopener noreferrer"
             style={{ marginLeft: 12 }}
